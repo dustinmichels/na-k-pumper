@@ -23,13 +23,16 @@ let app = new Application({
 //Add the canvas that Pixi automatically created for you to the HTML document
 document.body.appendChild(app.view);
 
-loader.add(["assets/bg1.png", "assets/na_guy.png"]).load(setup);
+loader
+  .add(["assets/bg1.png", "assets/na_guy.png", "assets/kGuy.png"])
+  .load(setup);
 
 //Define variables that might be used in more
 //than one function
 let state,
   bg1,
   naGuy,
+  kGuys,
   circle,
   bound1,
   bound2,
@@ -66,8 +69,25 @@ function setup() {
   naGuy.frictionY = 1;
   naGuy.speed = 0.15;
   naGuy.drag = 0.98;
-
   gameScene.addChild(naGuy);
+
+  // kGuys
+  let numberOfKGuys = 3,
+    spacing = 48,
+    xOffset = 150;
+
+  kGuys = [];
+  for (let i = 0; i < numberOfKGuys; i++) {
+    let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
+    kGuy.scale.set(0.52, 0.52);
+    //let x = spacing * i + xOffset;
+    let x = randomInt(0, gameScene.width - kGuy.width);
+    let y = randomInt(0, 182 - kGuy.height);
+    kGuy.x = x;
+    kGuy.y = y;
+    kGuys.push(kGuy);
+    gameScene.addChild(kGuy);
+  }
 
   // circle
   circle = new Graphics();
