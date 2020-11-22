@@ -10,6 +10,7 @@ let Application = PIXI.Application,
   TextStyle = PIXI.TextStyle;
 
 let b = new Bump(PIXI);
+let c = new Charm(PIXI);
 
 //Create a Pixi Application
 let app = new Application({
@@ -72,20 +73,20 @@ function setup() {
   gameScene.addChild(naGuy);
 
   // kGuys
-  let numberOfKGuys = 3,
-    spacing = 48,
-    xOffset = 150;
-
+  let numberOfKGuys = 3;
   kGuys = [];
   for (let i = 0; i < numberOfKGuys; i++) {
     let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
     kGuy.scale.set(0.52, 0.52);
     //let x = spacing * i + xOffset;
     let x = randomInt(0, gameScene.width - kGuy.width);
-    let y = randomInt(0, 182 - kGuy.height);
+    let y = randomInt(0, 182 - kGuy.height - 60);
     kGuy.x = x;
     kGuy.y = y;
     kGuys.push(kGuy);
+
+    c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
+
     gameScene.addChild(kGuy);
   }
 
@@ -218,6 +219,9 @@ function setup() {
 function gameLoop(delta) {
   //Update the current game state:
   state(delta);
+
+  //Update charm
+  c.update();
 }
 
 function play(delta) {
