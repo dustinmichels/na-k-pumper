@@ -1,3 +1,7 @@
+// Additional PixiJS Libraries
+const b = new Bump(PIXI);
+const c = new Charm(PIXI);
+
 //Aliases
 const Application = PIXI.Application;
 const Container = PIXI.Container;
@@ -9,11 +13,8 @@ const Sprite = PIXI.Sprite;
 const Text = PIXI.Text;
 const TextStyle = PIXI.TextStyle;
 
-const b = new Bump(PIXI);
-const c = new Charm(PIXI);
-
 //Create a Pixi Application
-let app = new Application({
+const app = new Application({
   width: 1000,
   height: 565,
   antialiasing: true,
@@ -34,6 +35,7 @@ let state,
   bg1,
   naGuys,
   naHero,
+  pt1Touch,
   collision,
   kGuys,
   circle,
@@ -59,7 +61,7 @@ function setup() {
   gameScene.addChild(bg1);
 
   // --- Sodium (Na) Guys ---
-  let numberOfSodiumGuys = 4;
+  let numberOfSodiumGuys = 1;
   naGuys = [];
   for (let i = 0; i < numberOfSodiumGuys; i++) {
     let naGuy = new Sprite(resources["assets/na_guy.png"].texture);
@@ -271,7 +273,7 @@ function play(delta) {
     // check for collision b/w naGuy and pt
     collision = b.hit({ x: 570, y: 376 }, naGuy);
     if (collision) {
-      pt1IsHit = naGuy;
+      pt1Touch = naGuy;
       console.log("hit");
       naGuy.accelerationX = 0;
       naGuy.accelerationY = 0;
@@ -283,6 +285,12 @@ function play(delta) {
       naGuy.y = 358;
     }
   });
+
+  if (pt1Touch && pt1Touch.x === 570 && pt1Touch.y === 358) {
+    circle.visible = true;
+  } else {
+    circle.visible = false;
+  }
 
   // make everyone collibe with each other
   k_combinations(naGuys, 2).map((pair) => {
