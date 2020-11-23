@@ -35,20 +35,22 @@ let state,
   bg1,
   naGuys,
   naHero,
-  pt1Touch,
-  collision,
   kGuys,
-  circle,
   bound1,
   bound2,
   bound3,
-  pt,
   chimes,
   exit,
   message,
   gameScene,
   gameOverScene,
   id;
+
+const targetPoints = [
+  { x: 570, y: 386, lastTouched: null, circle: null },
+  { x: 590, y: 307, lastTouched: null, circle: null },
+  { x: 608, y: 236, lastTouched: null, circle: null },
+];
 
 function setup() {
   //Make the game scene and add it to the stage
@@ -120,15 +122,6 @@ function setup() {
     gameScene.addChild(kGuy);
   }
 
-  // circle
-  circle = new Graphics();
-  circle.beginFill(0x36ba01);
-  circle.drawCircle(596, 386, 35);
-  circle.endFill();
-  circle.alpha = 0.5;
-  circle.visible = false;
-  gameScene.addChild(circle);
-
   // bound 1
   bound1 = new Graphics();
   bound1.beginFill(0x36ba01);
@@ -162,14 +155,27 @@ function setup() {
   bound3.visible = false;
   gameScene.addChild(bound3);
 
-  // pt
-  pt = new Graphics();
-  pt.beginFill(0xe50e0e);
-  pt.drawCircle(0, 0, 2);
-  pt.x = 570;
-  pt.y = 376;
-  pt.endFill();
-  gameScene.addChild(pt);
+  // target points and circles
+  targetPoints.forEach((pt) => {
+    // pt
+    let target = new Graphics();
+    target.beginFill(0xe50e0e);
+    target.drawCircle(0, 0, 2);
+    target.x = pt.x;
+    target.y = pt.y;
+    target.endFill();
+    gameScene.addChild(target);
+    // circle
+    let radius = naHero.height / 2;
+    let circle = new Graphics();
+    circle.beginFill(0xffffff);
+    circle.drawCircle(pt.x + radius, pt.y, radius + 5);
+    circle.endFill();
+    circle.alpha = 0.5;
+    circle.visible = true;
+    gameScene.addChild(circle);
+    pt.circle = circle;
+  });
 
   //Create the `gameOver` scene
   gameOverScene = new Container();
@@ -270,27 +276,37 @@ function play(delta) {
     b.hit(naGuy, bound2, true, true);
     b.hit(naGuy, bound3, true, true);
 
-    // check for collision b/w naGuy and pt
-    collision = b.hit({ x: 570, y: 376 }, naGuy);
-    if (collision) {
-      pt1Touch = naGuy;
-      console.log("hit");
-      naGuy.accelerationX = 0;
-      naGuy.accelerationY = 0;
-      naGuy.frictionX = 1;
-      naGuy.frictionY = 1;
-      naGuy.vx = 0;
-      naGuy.vy = 0;
-      naGuy.x = 570;
-      naGuy.y = 358;
-    }
+    // check for collision b/w naGuy and target pt
+    targetPoints.forEach((pt) => {
+      if (b.hit({ x: pt.x, y: pt.y }, naGuy)) {
+        pt.lastTouched = naGuy;
+        console.log("hit");
+        naGuy.accelerationX = 0;
+        naGuy.accelerationY = 0;
+        naGuy.frictionX = 1;
+        naGuy.frictionY = 1;
+        naGuy.vx = 0;
+        naGuy.vy = 0;
+        naGuy.x = pt.x;
+        naGuy.y = pt.y - naGuy.height / 2;
+      }
+    });
   });
 
-  if (pt1Touch && pt1Touch.x === 570 && pt1Touch.y === 358) {
-    circle.visible = true;
-  } else {
-    circle.visible = false;
-  }
+  // illuminate circles when they are still touching
+  // the guy that "hit" them.
+  targetPoints.forEach((pt) => {
+    if (
+      pt.circle &&
+      pt.lastTouched &&
+      pt.lastTouched.x === pt.x &&
+      pt.lastTouched.y === pt.y - naHero.height / 2
+    ) {
+      pt.circle.tint = 0x36ba01;
+    } else {
+      pt.circle.tint = 0xffffff;
+    }
+  });
 
   // make everyone collibe with each other
   k_combinations(naGuys, 2).map((pair) => {
@@ -303,7 +319,11 @@ function end() {
   gameOverScene.visible = true;
 }
 
-/* Helper functions */
+/*
+ * ----------------
+ * Helper functions
+ * ----------------
+ */
 
 //The `randomInt` helper function
 function randomInt(min, max) {
