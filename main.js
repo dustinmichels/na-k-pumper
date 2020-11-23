@@ -1,16 +1,16 @@
 //Aliases
-let Application = PIXI.Application,
-  Container = PIXI.Container,
-  loader = PIXI.loader,
-  resources = PIXI.loader.resources,
-  Graphics = PIXI.Graphics,
-  TextureCache = PIXI.utils.TextureCache,
-  Sprite = PIXI.Sprite,
-  Text = PIXI.Text,
-  TextStyle = PIXI.TextStyle;
+const Application = PIXI.Application;
+const Container = PIXI.Container;
+const loader = PIXI.Loader.shared;
+const resources = PIXI.Loader.shared.resources;
+const Graphics = PIXI.Graphics;
+const TextureCache = PIXI.utils.TextureCache;
+const Sprite = PIXI.Sprite;
+const Text = PIXI.Text;
+const TextStyle = PIXI.TextStyle;
 
-let b = new Bump(PIXI);
-let c = new Charm(PIXI);
+const b = new Bump(PIXI);
+const c = new Charm(PIXI);
 
 //Create a Pixi Application
 let app = new Application({
@@ -32,7 +32,9 @@ loader
 //than one function
 let state,
   bg1,
-  naGuy,
+  naGuys,
+  naHero,
+  collision,
   kGuys,
   circle,
   bound1,
@@ -48,6 +50,7 @@ let state,
 
 function setup() {
   //Make the game scene and add it to the stage
+
   gameScene = new Container();
   app.stage.addChild(gameScene);
 
@@ -55,38 +58,63 @@ function setup() {
   bg1 = new Sprite(resources["assets/bg1.png"].texture);
   gameScene.addChild(bg1);
 
-  // naGuy
-  naGuy = new Sprite(resources["assets/na_guy.png"].texture);
-  naGuy.scale.set(0.52, 0.52);
-  naGuy.x = 300;
-  naGuy.y = gameScene.height - naGuy.height - 30;
-  naGuy.radius = naGuy.height / 2;
-  naGuy.circular = true;
-  naGuy.vx = 0;
-  naGuy.vy = 0;
-  naGuy.accelerationX = 0;
-  naGuy.accelerationY = 0;
-  naGuy.frictionX = 1;
-  naGuy.frictionY = 1;
-  naGuy.speed = 0.15;
-  naGuy.drag = 0.98;
-  gameScene.addChild(naGuy);
+  // --- Sodium (Na) Guys ---
+  let numberOfSodiumGuys = 4;
+  naGuys = [];
+  for (let i = 0; i < numberOfSodiumGuys; i++) {
+    let naGuy = new Sprite(resources["assets/na_guy.png"].texture);
+    naGuy.scale.set(0.5, 0.5);
+    naGuy.x = randomInt(
+      (gameScene.width / numberOfSodiumGuys) * i,
+      (gameScene.width / numberOfSodiumGuys) * (i + 1) - naGuy.width
+    );
+    naGuy.y = gameScene.height - naGuy.height - 30;
+    naGuy.circular = true;
+    naGuy.vx = 0;
+    naGuy.vy = 0;
+    naGuy.accelerationX = 0;
+    naGuy.accelerationY = 0;
+    naGuy.frictionX = 1;
+    naGuy.frictionY = 1;
+    naGuy.speed = 0.15;
+    naGuy.drag = 0.98;
+    naGuys.push(naGuy);
+    gameScene.addChild(naGuy);
+  }
+  naHero = naGuys[0];
+  let glowFilter = new PIXI.filters.GlowFilter();
+  naHero.filters = [glowFilter];
+
+  // --- Potassium (K) Guys ---
+  // background kGuy
+  let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
+  kGuy.scale.set(0.25, 0.25);
+  let x = randomInt(0, gameScene.width - kGuy.width);
+  let y = randomInt(0, 182 - kGuy.height - 60);
+  kGuy.x = x;
+  kGuy.y = y;
+  kGuy.alpha = 0.5;
+  let blurFilter = new PIXI.filters.BlurFilter();
+  blurFilter.blur = 1;
+  kGuy.filters = [blurFilter];
+  c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
+  gameScene.addChild(kGuy);
 
   // kGuys
   let numberOfKGuys = 3;
   kGuys = [];
   for (let i = 0; i < numberOfKGuys; i++) {
     let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
-    kGuy.scale.set(0.52, 0.52);
-    //let x = spacing * i + xOffset;
-    let x = randomInt(0, gameScene.width - kGuy.width);
+    kGuy.scale.set(0.5, 0.5);
+    let x = randomInt(
+      (gameScene.width / numberOfKGuys) * i,
+      (gameScene.width / numberOfKGuys) * (i + 1) - kGuy.width
+    );
     let y = randomInt(0, 182 - kGuy.height - 60);
     kGuy.x = x;
     kGuy.y = y;
     kGuys.push(kGuy);
-
     c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
-
     gameScene.addChild(kGuy);
   }
 
@@ -165,47 +193,47 @@ function setup() {
 
   //Left
   left.press = () => {
-    naGuy.accelerationX = -naGuy.speed;
-    naGuy.frictionX = 1;
+    naHero.accelerationX = -naHero.speed;
+    naHero.frictionX = 1;
   };
   left.release = () => {
     if (!right.isDown) {
-      naGuy.accelerationX = 0;
-      naGuy.frictionX = naGuy.drag;
+      naHero.accelerationX = 0;
+      naHero.frictionX = naHero.drag;
     }
   };
 
   //Up
   up.press = () => {
-    naGuy.accelerationY = -naGuy.speed;
-    naGuy.frictionY = 1;
+    naHero.accelerationY = -naHero.speed;
+    naHero.frictionY = 1;
   };
   up.release = () => {
     if (!down.isDown) {
-      naGuy.accelerationY = 0;
-      naGuy.frictionY = naGuy.drag;
+      naHero.accelerationY = 0;
+      naHero.frictionY = naHero.drag;
     }
   };
   //Right
   right.press = () => {
-    naGuy.accelerationX = naGuy.speed;
-    naGuy.frictionX = 1;
+    naHero.accelerationX = naHero.speed;
+    naHero.frictionX = 1;
   };
   right.release = () => {
     if (!left.isDown) {
-      naGuy.accelerationX = 0;
-      naGuy.frictionX = naGuy.drag;
+      naHero.accelerationX = 0;
+      naHero.frictionX = naHero.drag;
     }
   };
   //Down
   down.press = () => {
-    naGuy.accelerationY = naGuy.speed;
-    naGuy.frictionY = 1;
+    naHero.accelerationY = naHero.speed;
+    naHero.frictionY = 1;
   };
   down.release = () => {
     if (!up.isDown) {
-      naGuy.accelerationY = 0;
-      naGuy.frictionY = naGuy.drag;
+      naHero.accelerationY = 0;
+      naHero.frictionY = naHero.drag;
     }
   };
 
@@ -225,35 +253,41 @@ function gameLoop(delta) {
 }
 
 function play(delta) {
-  //Apply acceleration by adding the acceleration to the sprite's velocity
-  naGuy.vx += naGuy.accelerationX;
-  naGuy.vy += naGuy.accelerationY;
-  //Apply friction by multiplying sprite's velocity by the friction
-  naGuy.vx *= naGuy.frictionX;
-  naGuy.vy *= naGuy.frictionY;
-  //Apply the velocity to the sprite's position to make it move
-  naGuy.x += naGuy.vx;
-  naGuy.y += naGuy.vy;
+  naGuys.map((naGuy) => {
+    // make them move
+    naGuy.vx += naGuy.accelerationX;
+    naGuy.vy += naGuy.accelerationY;
+    naGuy.vx *= naGuy.frictionX;
+    naGuy.vy *= naGuy.frictionY;
+    naGuy.x += naGuy.vx;
+    naGuy.y += naGuy.vy;
 
-  b.contain(naGuy, { x: 0, y: 0, width: 1000, height: 565 }, true);
+    // contain in game area
+    b.contain(naGuy, { x: 0, y: 0, width: 1000, height: 565 }, true);
+    b.hit(naGuy, bound1, true, true);
+    b.hit(naGuy, bound2, true, true);
+    b.hit(naGuy, bound3, true, true);
 
-  b.hit(naGuy, bound1, true, true);
-  b.hit(naGuy, bound2, true, true);
-  b.hit(naGuy, bound3, true, true);
+    // check for collision b/w naGuy and pt
+    collision = b.hit({ x: 570, y: 376 }, naGuy);
+    if (collision) {
+      pt1IsHit = naGuy;
+      console.log("hit");
+      naGuy.accelerationX = 0;
+      naGuy.accelerationY = 0;
+      naGuy.frictionX = 1;
+      naGuy.frictionY = 1;
+      naGuy.vx = 0;
+      naGuy.vy = 0;
+      naGuy.x = 570;
+      naGuy.y = 358;
+    }
+  });
 
-  // check for collision b/w naGuy and pt
-  if (b.hit({ x: 570, y: 376 }, naGuy)) {
-    console.log("hit");
-    circle.visible = true;
-    naGuy.accelerationX = 0;
-    naGuy.accelerationY = 0;
-    naGuy.frictionX = 1;
-    naGuy.frictionY = 1;
-    naGuy.vx = 0;
-    naGuy.vy = 0;
-    naGuy.x = 570;
-    naGuy.y = 358;
-  }
+  // make everyone collibe with each other
+  k_combinations(naGuys, 2).map((pair) => {
+    b.movingCircleCollision(pair[0], pair[1]);
+  });
 }
 
 function end() {

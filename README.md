@@ -1,7 +1,7 @@
 # Na-K-Pumper
 
-A just-for-fun biology game made with PixiJS. Work in progress.
+A just-for-fun biology game made with [PIXI.js](https://github.com/pixijs/pixi.js). Work in progress.
 
-## Credit
+## Attribution
 
 The artwork is all taken from an Amoeba Sisters [youtube video](https://www.youtube.com/watch?v=7NY6XdPBhxo).
