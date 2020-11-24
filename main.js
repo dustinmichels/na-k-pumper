@@ -47,9 +47,9 @@ let state,
   id;
 
 const targetPoints = [
-  { x: 570, y: 386, lastTouched: null, circle: null },
-  { x: 590, y: 307, lastTouched: null, circle: null },
-  { x: 608, y: 236, lastTouched: null, circle: null },
+  { x: 570, y: 386, lastTouched: null, circle: null, filled: false },
+  { x: 590, y: 307, lastTouched: null, circle: null, filled: false },
+  { x: 608, y: 236, lastTouched: null, circle: null, filled: false },
 ];
 
 function setup() {
@@ -63,7 +63,7 @@ function setup() {
   gameScene.addChild(bg1);
 
   // --- Sodium (Na) Guys ---
-  let numberOfSodiumGuys = 1;
+  let numberOfSodiumGuys = 5;
   naGuys = [];
   for (let i = 0; i < numberOfSodiumGuys; i++) {
     let naGuy = new Sprite(resources["assets/na_guy.png"].texture);
@@ -105,7 +105,7 @@ function setup() {
   gameScene.addChild(kGuy);
 
   // kGuys
-  let numberOfKGuys = 3;
+  let numberOfKGuys = 6;
   kGuys = [];
   for (let i = 0; i < numberOfKGuys; i++) {
     let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
@@ -280,7 +280,6 @@ function play(delta) {
     targetPoints.forEach((pt) => {
       if (b.hit({ x: pt.x, y: pt.y }, naGuy)) {
         pt.lastTouched = naGuy;
-        console.log("hit");
         naGuy.accelerationX = 0;
         naGuy.accelerationY = 0;
         naGuy.frictionX = 1;
@@ -302,11 +301,18 @@ function play(delta) {
       pt.lastTouched.x === pt.x &&
       pt.lastTouched.y === pt.y - naHero.height / 2
     ) {
+      pt.filled = true;
       pt.circle.tint = 0x36ba01;
     } else {
+      pt.filled = false;
       pt.circle.tint = 0xffffff;
     }
   });
+
+  if (targetPoints.every((pt) => pt.filled)) {
+    state = end;
+    //console.log("done!");
+  }
 
   // make everyone collibe with each other
   k_combinations(naGuys, 2).map((pair) => {
