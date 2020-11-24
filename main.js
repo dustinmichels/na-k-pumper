@@ -22,23 +22,34 @@ const app = new Application({
   resolution: 1,
 });
 
+const TEST = false;
+
 //Add the canvas that Pixi automatically created for you to the HTML document
 document.body.appendChild(app.view);
 
 loader
-  .add(["assets/bg1.png", "assets/na_guy.png", "assets/kGuy.png"])
+  .add([
+    "assets/bg1.png",
+    "assets/bg2.png",
+    "assets/wiggle1.png",
+    "assets/na_guy.png",
+    "assets/kGuy.png",
+  ])
   .load(setup);
 
 //Define variables that might be used in more
 //than one function
 let state,
   bg1,
+  wiggle1,
+  bg2,
   naGuys,
   naHero,
   kGuys,
   bound1,
   bound2,
   bound3,
+  transitionText,
   chimes,
   exit,
   message,
@@ -58,9 +69,19 @@ function setup() {
   gameScene = new Container();
   app.stage.addChild(gameScene);
 
-  // bg1
+  // background1
   bg1 = new Sprite(resources["assets/bg1.png"].texture);
   gameScene.addChild(bg1);
+
+  // wiggle background1
+  wiggle1 = new Sprite(resources["assets/wiggle1.png"].texture);
+  wiggle1.visible = false;
+  gameScene.addChild(wiggle1);
+
+  // background2
+  bg2 = new Sprite(resources["assets/bg2.png"].texture);
+  bg2.visible = false;
+  gameScene.addChild(bg2);
 
   // --- Sodium (Na) Guys ---
   let numberOfSodiumGuys = 5;
@@ -105,7 +126,7 @@ function setup() {
   gameScene.addChild(kGuy);
 
   // kGuys
-  let numberOfKGuys = 6;
+  let numberOfKGuys = 4;
   kGuys = [];
   for (let i = 0; i < numberOfKGuys; i++) {
     let kGuy = new Sprite(resources["assets/kGuy.png"].texture);
@@ -177,17 +198,35 @@ function setup() {
     pt.circle = circle;
   });
 
+  //Create the text sprite and add it to the `gameOver` scene
+  let style = new TextStyle({
+    fontFamily: "Futura",
+    fontSize: 64,
+    fill: "white",
+    stroke: "teal",
+    strokeThickness: 10,
+    dropShadow: true,
+    dropShadowDistance: 20,
+  });
+  transitionText = new Text("Phosphorylated!", style);
+  transitionText.x = 150;
+  transitionText.y = 90;
+  transitionText.rotation = -0.15;
+  transitionText.visible = false;
+  gameScene.addChild(transitionText);
+
+  // ----- game over scene -----
   //Create the `gameOver` scene
   gameOverScene = new Container();
   app.stage.addChild(gameOverScene);
   gameOverScene.visible = false;
 
   //Create the text sprite and add it to the `gameOver` scene
-  let style = new TextStyle({
-    fontFamily: "Futura",
-    fontSize: 64,
-    fill: "white",
-  });
+  // let style = new TextStyle({
+  //   fontFamily: "Futura",
+  //   fontSize: 64,
+  //   fill: "white",
+  // });
   message = new Text("The End!", style);
   message.x = 120;
   message.y = app.stage.height / 2 - 32;
@@ -247,6 +286,25 @@ function setup() {
 
   //Set the game state
   state = play;
+
+  if (TEST) {
+    naGuys[0].x = targetPoints[0].x;
+    naGuys[0].y = targetPoints[0].y - naHero.height / 2;
+    targetPoints[0].lastTouched = naGuys[0];
+
+    naGuys[1].x = targetPoints[1].x;
+    naGuys[1].y = targetPoints[1].y - naHero.height / 2;
+    targetPoints[1].lastTouched = naGuys[1];
+
+    naGuys[2].x = targetPoints[2].x;
+    naGuys[2].y = targetPoints[2].y - naHero.height / 2;
+    targetPoints[2].lastTouched = naGuys[2];
+
+    state = transition;
+    // setTimeout(() => {
+    //   state = transition;
+    // }, 1000);
+  }
 
   //Start the game loop
   app.ticker.add((delta) => gameLoop(delta));
@@ -310,7 +368,7 @@ function play(delta) {
   });
 
   if (targetPoints.every((pt) => pt.filled)) {
-    state = end;
+    state = transition;
     //console.log("done!");
   }
 
@@ -318,6 +376,57 @@ function play(delta) {
   k_combinations(naGuys, 2).map((pair) => {
     b.movingCircleCollision(pair[0], pair[1]);
   });
+}
+
+function transition(delta) {
+  // stop movement
+  naGuys.forEach((naGuy) => {
+    naGuy.accelerationX = 0;
+    naGuy.accelerationY = 0;
+    naGuy.frictionX = 1;
+    naGuy.frictionY = 1;
+    naGuy.vx = 0;
+    naGuy.vy = 0;
+  });
+
+  // reposition my guys
+  bound3.y = bound3.y - 100;
+
+  // flash animation
+  wait(1000).then(() => {
+    transitionText.visible = true;
+    wiggle1.visible = true;
+  });
+  wait(2000).then(() => {
+    wiggle1.visible = false;
+  });
+  wait(3000).then(() => {
+    wiggle1.visible = true;
+  });
+  wait(4000).then(() => {
+    wiggle1.visible = false;
+    transitionText.visible = false;
+    bg1.visible = false;
+    bg2.visible = true;
+
+    targetPoints[0].lastTouched.visible = true;
+    targetPoints[0].circle.visible = false;
+    targetPoints[0].lastTouched.x = 580;
+    targetPoints[0].lastTouched.y = 320;
+
+    targetPoints[1].lastTouched.visible = true;
+    targetPoints[1].circle.visible = false;
+    targetPoints[1].lastTouched.x = 520;
+    targetPoints[1].lastTouched.y = 280;
+
+    targetPoints[2].lastTouched.visible = true;
+    targetPoints[2].circle.visible = false;
+    targetPoints[2].lastTouched.x = 558;
+    targetPoints[2].lastTouched.y = 180;
+  });
+  // TODO: animate chaning of guards
+
+  state = play;
 }
 
 function end() {
@@ -368,4 +477,10 @@ function keyboard(keyCode) {
   window.addEventListener("keydown", key.downHandler.bind(key), false);
   window.addEventListener("keyup", key.upHandler.bind(key), false);
   return key;
+}
+
+function wait(duration = 0) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, duration);
+  });
 }
