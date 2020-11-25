@@ -1,6 +1,7 @@
 // Additional PixiJS Libraries
 const b = new Bump(PIXI);
 const c = new Charm(PIXI);
+const su = new SpriteUtilities(PIXI);
 
 //Aliases
 const Application = PIXI.Application;
@@ -46,10 +47,8 @@ let state,
   naGuys,
   naHero,
   kGuys,
-  bound1,
-  bound2,
-  bound3,
   transitionText,
+  boundingBoxes,
   chimes,
   exit,
   message,
@@ -61,6 +60,12 @@ const targetPoints = [
   { x: 570, y: 386, lastTouched: null, circle: null, filled: false },
   { x: 590, y: 307, lastTouched: null, circle: null, filled: false },
   { x: 608, y: 236, lastTouched: null, circle: null, filled: false },
+];
+
+const boundingBoxParams = [
+  { x: 0, y: 182, width: 560, height: 242, fill: 0x36ba01 },
+  { x: 730, y: 182, width: 300, height: 242, fill: 0x0ecae5 },
+  { x: 570, y: 165, width: 160, height: 25, fill: 0xff71ce },
 ];
 
 function setup() {
@@ -143,38 +148,20 @@ function setup() {
     gameScene.addChild(kGuy);
   }
 
-  // bound 1
-  bound1 = new Graphics();
-  bound1.beginFill(0x36ba01);
-  bound1.drawRect(0, 0, 560, 242);
-  bound1.endFill();
-  bound1.x = 0;
-  bound1.y = 182;
-  bound1.alpha = 0.5;
-  bound1.visible = false;
-  gameScene.addChild(bound1);
-
-  // bound 2
-  bound2 = new Graphics();
-  bound2.beginFill(0x0ecae5);
-  bound2.drawRect(0, 0, 300, 242);
-  bound2.endFill();
-  bound2.x = 730;
-  bound2.y = 182;
-  bound2.alpha = 0.5;
-  bound2.visible = false;
-  gameScene.addChild(bound2);
-
-  // bound 3
-  bound3 = new Graphics();
-  bound3.beginFill(0xff71ce);
-  bound3.drawRect(0, 0, 160, 25);
-  bound3.endFill();
-  bound3.x = 570;
-  bound3.y = 165;
-  bound3.alpha = 0.5;
-  bound3.visible = false;
-  gameScene.addChild(bound3);
+  // add bounding boxes
+  boundingBoxes = [];
+  boundingBoxParams.forEach((box) => {
+    let bound = new Graphics();
+    bound.beginFill(box.fill);
+    bound.drawRect(0, 0, box.width, box.height);
+    bound.endFill();
+    bound.x = box.x;
+    bound.y = box.y;
+    bound.alpha = 0.5;
+    bound.visible = false;
+    boundingBoxes.push(bound);
+    gameScene.addChild(bound);
+  });
 
   // target points and circles
   targetPoints.forEach((pt) => {
@@ -192,7 +179,7 @@ function setup() {
     circle.beginFill(0xffffff);
     circle.drawCircle(pt.x + radius, pt.y, radius + 5);
     circle.endFill();
-    circle.alpha = 0.5;
+    circle.alpha = 0.3;
     circle.visible = true;
     gameScene.addChild(circle);
     pt.circle = circle;
@@ -330,9 +317,9 @@ function play(delta) {
 
     // contain in game area
     b.contain(naGuy, { x: 0, y: 0, width: 1000, height: 565 }, true);
-    b.hit(naGuy, bound1, true, true);
-    b.hit(naGuy, bound2, true, true);
-    b.hit(naGuy, bound3, true, true);
+    boundingBoxes.forEach((box) => {
+      b.hit(naGuy, box, true, true);
+    });
 
     // check for collision b/w naGuy and target pt
     targetPoints.forEach((pt) => {

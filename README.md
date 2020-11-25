@@ -1,4 +1,4 @@
-# Na-K-Pumper
+# Sodium Hero
 
 A just-for-fun biology game made with [PIXI.js](https://github.com/pixijs/pixi.js). Work in progress.
 
