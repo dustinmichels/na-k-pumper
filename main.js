@@ -1,10 +1,10 @@
 // Additional PixiJS Libraries
 const b = new Bump(PIXI);
 const c = new Charm(PIXI);
-const su = new SpriteUtilities(PIXI);
+// const su = new SpriteUtilities(PIXI);
 
 //Aliases
-// const Application = PIXI.Application;
+const Application = PIXI.Application;
 const Container = PIXI.Container;
 const loader = PIXI.Loader.shared;
 const resources = PIXI.Loader.shared.resources;
@@ -15,31 +15,20 @@ const Text = PIXI.Text;
 const TextStyle = PIXI.TextStyle;
 const autoDetectRenderer = PIXI.autoDetectRenderer;
 
-//Create a Pixi stage and renderer
-let stage = new Container(),
-  renderer = autoDetectRenderer(1000, 565);
-document.body.appendChild(renderer.view);
-
-renderer.resize(1000, 565);
-
-//Scale the canvas to the maximum window size
-// let scale = scaleToWindow(renderer.view);
-
-// let state = play;
-
 //Create a Pixi Application
-// const app = new Application({
-//   width: 1000,
-//   height: 565,
-//   antialiasing: true,
-//   transparent: false,
-//   resolution: 1,
-// });
+const app = new Application({
+  width: 1000,
+  height: 565,
+  antialiasing: true,
+  transparent: false,
+  resolution: 1,
+  // resolution: window.devicePixelRatio || 1,
+});
 
 //Add the canvas that Pixi automatically created for you to the HTML document
-// document.body.appendChild(app.view);
+document.body.appendChild(app.view);
 
-const TEST = true;
+const TEST_MODE = false;
 
 loader
   .add([
@@ -85,7 +74,7 @@ function setup() {
   //Make the game scene and add it to the stage
 
   gameScene = new Container();
-  stage.addChild(gameScene);
+  app.stage.addChild(gameScene);
 
   // create an animated sprite
   // animatedBg = PIXI.AnimatedSprite.fromFrames([
@@ -132,7 +121,7 @@ function setup() {
     gameScene.addChild(naGuy);
   }
   naHero = naGuys[0];
-  let glowFilter = new PIXI.filters.GlowFilter();
+  let glowFilter = new PIXI.filters.GlowFilter({ color: 0xe75f5b });
   naHero.filters = [glowFilter];
 
   // --- Potassium (K) Guys ---
@@ -225,7 +214,7 @@ function setup() {
   // ----- game over scene -----
   //Create the `gameOver` scene
   gameOverScene = new Container();
-  stage.addChild(gameOverScene);
+  app.stage.addChild(gameOverScene);
   gameOverScene.visible = false;
 
   //Create the text sprite and add it to the `gameOver` scene
@@ -236,7 +225,7 @@ function setup() {
   // });
   message = new Text("The End!", style);
   message.x = 120;
-  message.y = stage.height / 2 - 32;
+  message.y = app.stage.height / 2 - 32;
   gameOverScene.addChild(message);
 
   //Capture the keyboard arrow keys
@@ -294,7 +283,7 @@ function setup() {
   //Set the game state
   state = play;
 
-  if (TEST) {
+  if (TEST_MODE) {
     boundingBoxes.forEach((box) => (box.visible = true));
 
     naGuys[0].x = targetPoints[0].x;
@@ -316,30 +305,23 @@ function setup() {
   }
 
   //Start the game loop
-  gameLoop();
+  app.ticker.add((delta) => gameLoop(delta));
+  // gameLoop();
 }
 
-function gameLoop() {
-  //Loop this function 60 times per second
-  requestAnimationFrame(gameLoop);
-
+function gameLoop(delta) {
   //Run the current state
-  state();
+  state(delta);
 
   // Update Charm
   c.update();
 
-  //Update Tink
-  //t.update();
-
-  //Update Dust
-  //d.update();
-
-  renderer.render(stage);
+  //app.renderer.render(app.stage);
+  // renderer.render(stage);
 }
 
 function play(delta) {
-  naGuys.map((naGuy) => {
+  naGuys.forEach((naGuy) => {
     // make them move
     naGuy.vx += naGuy.accelerationX;
     naGuy.vy += naGuy.accelerationY;
