@@ -4,7 +4,7 @@ const c = new Charm(PIXI);
 const su = new SpriteUtilities(PIXI);
 
 //Aliases
-const Application = PIXI.Application;
+// const Application = PIXI.Application;
 const Container = PIXI.Container;
 const loader = PIXI.Loader.shared;
 const resources = PIXI.Loader.shared.resources;
@@ -13,20 +13,33 @@ const TextureCache = PIXI.utils.TextureCache;
 const Sprite = PIXI.Sprite;
 const Text = PIXI.Text;
 const TextStyle = PIXI.TextStyle;
+const autoDetectRenderer = PIXI.autoDetectRenderer;
+
+//Create a Pixi stage and renderer
+let stage = new Container(),
+  renderer = autoDetectRenderer(1000, 565);
+document.body.appendChild(renderer.view);
+
+renderer.resize(1000, 565);
+
+//Scale the canvas to the maximum window size
+// let scale = scaleToWindow(renderer.view);
+
+// let state = play;
 
 //Create a Pixi Application
-const app = new Application({
-  width: 1000,
-  height: 565,
-  antialiasing: true,
-  transparent: false,
-  resolution: 1,
-});
-
-const TEST = false;
+// const app = new Application({
+//   width: 1000,
+//   height: 565,
+//   antialiasing: true,
+//   transparent: false,
+//   resolution: 1,
+// });
 
 //Add the canvas that Pixi automatically created for you to the HTML document
-document.body.appendChild(app.view);
+// document.body.appendChild(app.view);
+
+const TEST = true;
 
 loader
   .add([
@@ -72,7 +85,14 @@ function setup() {
   //Make the game scene and add it to the stage
 
   gameScene = new Container();
-  app.stage.addChild(gameScene);
+  stage.addChild(gameScene);
+
+  // create an animated sprite
+  // animatedBg = PIXI.AnimatedSprite.fromFrames([
+  //   "assets/bg1.png",
+  //   "assets/wiggle1.png",
+  // ]);
+  // gameScene.addChild(animatedBg);
 
   // background1
   bg1 = new Sprite(resources["assets/bg1.png"].texture);
@@ -205,7 +225,7 @@ function setup() {
   // ----- game over scene -----
   //Create the `gameOver` scene
   gameOverScene = new Container();
-  app.stage.addChild(gameOverScene);
+  stage.addChild(gameOverScene);
   gameOverScene.visible = false;
 
   //Create the text sprite and add it to the `gameOver` scene
@@ -216,7 +236,7 @@ function setup() {
   // });
   message = new Text("The End!", style);
   message.x = 120;
-  message.y = app.stage.height / 2 - 32;
+  message.y = stage.height / 2 - 32;
   gameOverScene.addChild(message);
 
   //Capture the keyboard arrow keys
@@ -275,6 +295,8 @@ function setup() {
   state = play;
 
   if (TEST) {
+    boundingBoxes.forEach((box) => (box.visible = true));
+
     naGuys[0].x = targetPoints[0].x;
     naGuys[0].y = targetPoints[0].y - naHero.height / 2;
     targetPoints[0].lastTouched = naGuys[0];
@@ -294,15 +316,26 @@ function setup() {
   }
 
   //Start the game loop
-  app.ticker.add((delta) => gameLoop(delta));
+  gameLoop();
 }
 
-function gameLoop(delta) {
-  //Update the current game state:
-  state(delta);
+function gameLoop() {
+  //Loop this function 60 times per second
+  requestAnimationFrame(gameLoop);
 
-  //Update charm
+  //Run the current state
+  state();
+
+  // Update Charm
   c.update();
+
+  //Update Tink
+  //t.update();
+
+  //Update Dust
+  //d.update();
+
+  renderer.render(stage);
 }
 
 function play(delta) {
@@ -355,6 +388,7 @@ function play(delta) {
   });
 
   if (targetPoints.every((pt) => pt.filled)) {
+    console.log("changing state to transition");
     state = transition;
     //console.log("done!");
   }
@@ -376,44 +410,47 @@ function transition(delta) {
     naGuy.vy = 0;
   });
 
+  wiggle1.visible = true;
+  // c.pulse(wiggle1, 60);
+
   // reposition my guys
-  bound3.y = bound3.y - 100;
+  // bound3.y = bound3.y - 100;
 
   // flash animation
-  wait(1000).then(() => {
-    transitionText.visible = true;
-    wiggle1.visible = true;
-  });
-  wait(2000).then(() => {
-    wiggle1.visible = false;
-  });
-  wait(3000).then(() => {
-    wiggle1.visible = true;
-  });
-  wait(4000).then(() => {
-    wiggle1.visible = false;
-    transitionText.visible = false;
-    bg1.visible = false;
-    bg2.visible = true;
+  // wait(1000).then(() => {
+  //   transitionText.visible = true;
+  //   wiggle1.visible = true;
+  // });
+  // wait(2000).then(() => {
+  //   wiggle1.visible = false;
+  // });
+  // wait(3000).then(() => {
+  //   wiggle1.visible = true;
+  // });
+  // wait(4000).then(() => {
+  //   wiggle1.visible = false;
+  //   transitionText.visible = false;
+  //   bg1.visible = false;
+  //   bg2.visible = true;
 
-    targetPoints[0].lastTouched.visible = true;
-    targetPoints[0].circle.visible = false;
-    targetPoints[0].lastTouched.x = 580;
-    targetPoints[0].lastTouched.y = 320;
+  //   targetPoints[0].lastTouched.visible = true;
+  //   targetPoints[0].circle.visible = false;
+  //   targetPoints[0].lastTouched.x = 580;
+  //   targetPoints[0].lastTouched.y = 320;
 
-    targetPoints[1].lastTouched.visible = true;
-    targetPoints[1].circle.visible = false;
-    targetPoints[1].lastTouched.x = 520;
-    targetPoints[1].lastTouched.y = 280;
+  //   targetPoints[1].lastTouched.visible = true;
+  //   targetPoints[1].circle.visible = false;
+  //   targetPoints[1].lastTouched.x = 520;
+  //   targetPoints[1].lastTouched.y = 280;
 
-    targetPoints[2].lastTouched.visible = true;
-    targetPoints[2].circle.visible = false;
-    targetPoints[2].lastTouched.x = 558;
-    targetPoints[2].lastTouched.y = 180;
-  });
+  //   targetPoints[2].lastTouched.visible = true;
+  //   targetPoints[2].circle.visible = false;
+  //   targetPoints[2].lastTouched.x = 558;
+  //   targetPoints[2].lastTouched.y = 180;
+  // });
   // TODO: animate chaning of guards
 
-  state = play;
+  //state = play;
 }
 
 function end() {
