@@ -28,7 +28,7 @@ const app = new Application({
 //Add the canvas that Pixi automatically created for you to the HTML document
 document.body.appendChild(app.view);
 
-const TEST_MODE = false;
+const TEST_MODE = true;
 
 loader
   .add([
@@ -43,6 +43,7 @@ loader
 //Define variables that might be used in more
 //than one function
 let state,
+  timeCounter,
   bg1,
   wiggle1,
   bg2,
@@ -77,20 +78,20 @@ function setup() {
   app.stage.addChild(gameScene);
 
   // create an animated sprite
-  // animatedBg = PIXI.AnimatedSprite.fromFrames([
-  //   "assets/bg1.png",
-  //   "assets/wiggle1.png",
-  // ]);
-  // gameScene.addChild(animatedBg);
+  animatedBg = PIXI.AnimatedSprite.fromFrames([
+    "assets/bg1.png",
+    "assets/wiggle1.png",
+  ]);
+  gameScene.addChild(animatedBg);
 
   // background1
-  bg1 = new Sprite(resources["assets/bg1.png"].texture);
-  gameScene.addChild(bg1);
+  // bg1 = new Sprite(resources["assets/bg1.png"].texture);
+  // gameScene.addChild(bg1);
 
   // wiggle background1
-  wiggle1 = new Sprite(resources["assets/wiggle1.png"].texture);
-  wiggle1.visible = false;
-  gameScene.addChild(wiggle1);
+  // wiggle1 = new Sprite(resources["assets/wiggle1.png"].texture);
+  // wiggle1.visible = false;
+  // gameScene.addChild(wiggle1);
 
   // background2
   bg2 = new Sprite(resources["assets/bg2.png"].texture);
@@ -181,6 +182,7 @@ function setup() {
     target.x = pt.x;
     target.y = pt.y;
     target.endFill();
+    target.visible = false;
     gameScene.addChild(target);
     // circle
     let radius = naHero.height / 2;
@@ -382,6 +384,11 @@ function play(delta) {
 }
 
 function transition(delta) {
+  timeCounter = 0;
+  state = transitionPt1;
+}
+
+function transitionPt1(delta) {
   // stop movement
   naGuys.forEach((naGuy) => {
     naGuy.accelerationX = 0;
@@ -392,52 +399,79 @@ function transition(delta) {
     naGuy.vy = 0;
   });
 
-  wiggle1.visible = true;
-  // c.pulse(wiggle1, 60);
+  // hide target circles
+  targetPoints.forEach((pt) => (pt.circle.visible = false));
 
-  // reposition my guys
-  // bound3.y = bound3.y - 100;
+  animatedBg.filters = [new PIXI.filters.GodrayFilter()];
+  // animatedBg.filters = [[]];
 
-  // flash animation
-  // wait(1000).then(() => {
-  //   transitionText.visible = true;
-  //   wiggle1.visible = true;
-  // });
-  // wait(2000).then(() => {
-  //   wiggle1.visible = false;
-  // });
-  // wait(3000).then(() => {
-  //   wiggle1.visible = true;
-  // });
-  // wait(4000).then(() => {
-  //   wiggle1.visible = false;
-  //   transitionText.visible = false;
-  //   bg1.visible = false;
-  //   bg2.visible = true;
+  transitionText.visible = true;
+  animatedBg.animationSpeed = 0.024;
+  animatedBg.play();
 
-  //   targetPoints[0].lastTouched.visible = true;
-  //   targetPoints[0].circle.visible = false;
-  //   targetPoints[0].lastTouched.x = 580;
-  //   targetPoints[0].lastTouched.y = 320;
+  if (timeCounter > 10) {
+    // if (timeCounter > 230) {
+    animatedBg.stop();
+    transitionText.visible = false;
+    bg2.visible = true;
 
-  //   targetPoints[1].lastTouched.visible = true;
-  //   targetPoints[1].circle.visible = false;
-  //   targetPoints[1].lastTouched.x = 520;
-  //   targetPoints[1].lastTouched.y = 280;
+    // remove boundary boxes
+    removeBoundingBoxes();
 
-  //   targetPoints[2].lastTouched.visible = true;
-  //   targetPoints[2].circle.visible = false;
-  //   targetPoints[2].lastTouched.x = 558;
-  //   targetPoints[2].lastTouched.y = 180;
-  // });
-  // TODO: animate chaning of guards
+    // reposition my boys
+    targetPoints[0].lastTouched.x = 610;
+    targetPoints[0].lastTouched.y = 332;
 
-  //state = play;
+    targetPoints[1].lastTouched.x = 590;
+    targetPoints[1].lastTouched.y = 264;
+
+    targetPoints[2].lastTouched.x = 570;
+    targetPoints[2].lastTouched.y = 186;
+
+    // animatedBg.filters = [];
+    timeCounter = 0;
+    state = transitionPt2;
+  }
+  timeCounter += 1;
+}
+
+function transitionPt2(delta) {
+  sprite1 = targetPoints[0].lastTouched;
+  sprite2 = targetPoints[1].lastTouched;
+  sprite3 = targetPoints[2].lastTouched;
+
+  // animate movement
+  let curve = [
+    [sprite1.x, sprite1.y], //Start position
+    [108, 32], //Control point 1
+    [176, 32], //Control point 2
+    [196, 160], //End position
+  ];
+
+  c.followCurve(
+    sprite1, //The sprite
+    curve, //The Bezier curve array
+    120, //Duration, in milliseconds
+    "smoothstep", //Easing type
+    false //Should the tween yoyo?
+  );
 }
 
 function end() {
   gameScene.visible = false;
   gameOverScene.visible = true;
+}
+
+function removeBoundingBoxes() {
+  boundingBoxes.forEach((box) => {
+    box.y = box.y + 1000;
+  });
+}
+
+function replaceBoundingBoxes() {
+  boundingBoxes.forEach((box) => {
+    box.y = box.y - 1000;
+  });
 }
 
 /*
