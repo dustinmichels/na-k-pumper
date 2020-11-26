@@ -50,6 +50,7 @@ let state,
   naGuys,
   naHero,
   kGuys,
+  tween,
   transitionText,
   boundingBoxes,
   chimes,
@@ -137,7 +138,7 @@ function setup() {
   let blurFilter = new PIXI.filters.BlurFilter();
   blurFilter.blur = 1;
   kGuy.filters = [blurFilter];
-  c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
+  // c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
   gameScene.addChild(kGuy);
 
   // kGuys
@@ -154,7 +155,7 @@ function setup() {
     kGuy.x = x;
     kGuy.y = y;
     kGuys.push(kGuy);
-    c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
+    // c.slide(kGuy, kGuy.x, kGuy.y + 60, 120, "smoothstep", true);
     gameScene.addChild(kGuy);
   }
 
@@ -286,6 +287,30 @@ function setup() {
   state = play;
 
   if (TEST_MODE) {
+    // gridlines
+    for (i = 1; i < app.stage.width / 100; i++) {
+      let line = new Graphics();
+      if (i === 5) {
+        line.lineStyle(6, 0xffffff, 1);
+      } else {
+        line.lineStyle(2, 0xffffff, 1);
+      }
+      line.moveTo(100 * i, 0);
+      line.lineTo(100 * i, app.stage.height);
+      gameScene.addChild(line);
+    }
+    for (i = 1; i < app.stage.height / 100; i++) {
+      let line = new Graphics();
+      if (i === 3) {
+        line.lineStyle(6, 0xffffff, 1);
+      } else {
+        line.lineStyle(2, 0xffffff, 1);
+      }
+      line.moveTo(0, 100 * i);
+      line.lineTo(app.stage.width, 100 * i);
+      gameScene.addChild(line);
+    }
+
     boundingBoxes.forEach((box) => (box.visible = true));
 
     naGuys[0].x = targetPoints[0].x;
@@ -301,9 +326,6 @@ function setup() {
     targetPoints[2].lastTouched = naGuys[2];
 
     state = transition;
-    // setTimeout(() => {
-    //   state = transition;
-    // }, 1000);
   }
 
   //Start the game loop
@@ -389,6 +411,8 @@ function transition(delta) {
 }
 
 function transitionPt1(delta) {
+  timeCounter += 1;
+
   // stop movement
   naGuys.forEach((naGuy) => {
     naGuy.accelerationX = 0;
@@ -432,29 +456,132 @@ function transitionPt1(delta) {
     timeCounter = 0;
     state = transitionPt2;
   }
-  timeCounter += 1;
 }
 
 function transitionPt2(delta) {
-  sprite1 = targetPoints[0].lastTouched;
-  sprite2 = targetPoints[1].lastTouched;
-  sprite3 = targetPoints[2].lastTouched;
+  timeCounter += 1;
 
-  // animate movement
-  let curve = [
-    [sprite1.x, sprite1.y], //Start position
-    [108, 32], //Control point 1
-    [176, 32], //Control point 2
-    [196, 160], //End position
+  // console.log(timeCounter);
+
+  // --- remove Na Guys ---
+  let naSprites = [
+    {
+      s: targetPoints[0].lastTouched,
+      target1: [620, 300],
+      target2: [750, 60],
+      target3: [350, 60],
+      duration: 250,
+    },
+    {
+      s: targetPoints[1].lastTouched,
+      target1: [650, 250],
+      target2: [550, 70],
+      target3: [850, 80],
+      duration: 200,
+    },
+    {
+      s: targetPoints[2].lastTouched,
+      target1: [700, 40],
+      target2: [500, 40],
+      target3: [250, 100],
+      duration: 150,
+    },
   ];
 
-  c.followCurve(
-    sprite1, //The sprite
-    curve, //The Bezier curve array
-    120, //Duration, in milliseconds
-    "smoothstep", //Easing type
-    false //Should the tween yoyo?
-  );
+  naSprites.forEach((sprite) => {
+    // animate movement
+    let curve = [
+      [sprite.s.x, sprite.s.y],
+      sprite.target1,
+      sprite.target2,
+      sprite.target3,
+    ];
+
+    c.followCurve(
+      sprite.s, //The sprite
+      curve, //The Bezier curve array
+      sprite.duration, //Duration, in milliseconds
+      "smoothstep", //Easing type
+      false //Should the tween yoyo?
+    );
+  });
+
+  // --- place K guys ---
+  // sort by closeness to pump
+  kGuys.sort(function (a, b) {
+    return Math.abs(a.x - 650) - Math.abs(b.x - 650);
+  });
+
+  if (timeCounter > 100) {
+    let kSprites = [
+      {
+        s: kGuys[2],
+        target1: [620, 300],
+        target2: [750, 60],
+        target3: [700, 200],
+        duration: 250,
+      },
+      {
+        s: kGuys[3],
+        target1: [650, 250],
+        target2: [550, 70],
+        target3: [600, 350],
+        duration: 200,
+      },
+    ];
+
+    let sprite = kSprites[0];
+    console.log(sprite);
+    let curve = [
+      [sprite.s.x, sprite.s.y],
+      sprite.target1,
+      sprite.target2,
+      sprite.target3,
+    ];
+    tween = c.followCurve(
+      sprite.s, //The sprite
+      curve, //The Bezier curve array
+      sprite.duration, //Duration, in milliseconds
+      "smoothstep", //Easing type
+      false //Should the tween yoyo?
+    );
+    // kSprites.forEach((sprite) => {
+    //   // animate movement
+    //   let curve = [
+    //     [sprite.s.x, sprite.s.y],
+    //     sprite.target1,
+    //     sprite.target2,
+    //     sprite.target3,
+    //   ];
+    //   c.followCurve(
+    //     sprite.s, //The sprite
+    //     curve, //The Bezier curve array
+    //     sprite.duration, //Duration, in milliseconds
+    //     "smoothstep", //Easing type
+    //     false //Should the tween yoyo?
+    //   );
+    // });
+
+    state = transitionPt3;
+  }
+
+  // if (timeCounter === 1) {
+  //   console.log(naSprites);
+  //   console.log(kSprites);
+  // }
+}
+
+function transitionPt3() {
+  tween.onComplete = () => {
+    console.log("slide completed");
+    // timeCounter = 0;
+    // state = transitionPt3;
+    bg2.visible = false;
+  };
+}
+
+function pause() {
+  return;
 }
 
 function end() {
