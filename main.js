@@ -50,8 +50,8 @@ let state,
   naGuys,
   naHero,
   kGuys,
-  kGuyAnimationTweens,
-  naGuyAnimationTweens,
+  kGuyAnimationTween,
+  // naGuyAnimationTweens,
   transitionText,
   boundingBoxes,
   chimes,
@@ -462,7 +462,7 @@ function transitionPt1(delta) {
 function transitionPt2(delta) {
   console.log("Transition part 2");
 
-  // timeCounter += 1;
+  timeCounter += 1;
 
   // console.log(timeCounter);
 
@@ -491,7 +491,7 @@ function transitionPt2(delta) {
     },
   ];
 
-  naGuyAnimationTweens = [];
+  // naGuyAnimationTweens = [];
   naSprites.forEach((sprite) => {
     // animate movement
     let curve = [
@@ -501,109 +501,31 @@ function transitionPt2(delta) {
       sprite.target3,
     ];
 
-    naGuyAnimationTweens.push(
-      c.followCurve(
-        sprite.s, //The sprite
-        curve, //The Bezier curve array
-        sprite.duration, //Duration, in milliseconds
-        "smoothstep", //Easing type
-        false //Should the tween yoyo?
-      )
+    c.followCurve(
+      sprite.s, //The sprite
+      curve, //The Bezier curve array
+      sprite.duration, //Duration, in milliseconds
+      "smoothstep", //Easing type
+      false //Should the tween yoyo?
     );
   });
-  state = transitionPt3;
 
   // --- place K guys ---
-  // sort by closeness to pump
-  // kGuys.sort(function (a, b) {
-  //   return Math.abs(a.x - 650) - Math.abs(b.x - 650);
-  // });
-
-  // if (timeCounter > 100) {
-  //   let kSprites = [
-  //     {
-  //       s: kGuys[2],
-  //       target1: [620, 300],
-  //       target2: [750, 60],
-  //       target3: [700, 200],
-  //       duration: 250,
-  //     },
-  //     {
-  //       s: kGuys[3],
-  //       target1: [650, 250],
-  //       target2: [550, 70],
-  //       target3: [600, 350],
-  //       duration: 200,
-  //     },
-  //   ];
-
-  //   let sprite = kSprites[0];
-  //   console.log(sprite);
-  //   let curve = [
-  //     [sprite.s.x, sprite.s.y],
-  //     sprite.target1,
-  //     sprite.target2,
-  //     sprite.target3,
-  //   ];
-  //   kGuyAnimationTween = c.followCurve(
-  //     sprite.s, //The sprite
-  //     curve, //The Bezier curve array
-  //     sprite.duration, //Duration, in milliseconds
-  //     "smoothstep", //Easing type
-  //     false //Should the tween yoyo?
-  //   );
-
-  // kSprites.forEach((sprite) => {
-  //   // animate movement
-  //   let curve = [
-  //     [sprite.s.x, sprite.s.y],
-  //     sprite.target1,
-  //     sprite.target2,
-  //     sprite.target3,
-  //   ];
-  //   c.followCurve(
-  //     sprite.s, //The sprite
-  //     curve, //The Bezier curve array
-  //     sprite.duration, //Duration, in milliseconds
-  //     "smoothstep", //Easing type
-  //     false //Should the tween yoyo?
-  //   );
-  // });
-
-  // state = transitionPt4;
-  // }
-
-  // if (timeCounter === 1) {
-  //   console.log(naSprites);
-  //   console.log(kSprites);
-  // }
-}
-
-function transitionPt3() {
-  console.log("Transition part 3");
-
-  kGuyAnimationTweens = [];
-
-  let tween = naGuyAnimationTweens.pop();
-  tween.onComplete = () => {
-    console.log("naGuy slide completed");
-
-    // --- place K guys ---
+  if (timeCounter > 100) {
     // sort by closeness to pump
     kGuys.sort(function (a, b) {
       return Math.abs(a.x - 650) - Math.abs(b.x - 650);
     });
-
     let kSprites = [
       {
-        s: kGuys[0],
+        s: kGuys[2],
         target1: [620, 300],
         target2: [750, 60],
         target3: [700, 200],
         duration: 250,
       },
       {
-        s: kGuys[1],
+        s: kGuys[3],
         target1: [650, 250],
         target2: [550, 70],
         target3: [600, 350],
@@ -611,6 +533,7 @@ function transitionPt3() {
       },
     ];
 
+    let kGuyAnimationTweens = [];
     kSprites.forEach((sprite) => {
       // animate movement
       let curve = [
@@ -629,25 +552,21 @@ function transitionPt3() {
         )
       );
     });
-  };
-  state = transitionPt4;
-}
-
-function transitionPt4() {
-  let tween = kGuyAnimationTweens.pop();
-  if (tween) {
-    tween.onComplete = () => {
-      console.log("slide completed");
-      // timeCounter = 0;
-      // state = transitionPt3;
-      bg2.visible = false;
-    };
-    state = pause;
+    kGuyAnimationTween = kGuyAnimationTweens.pop();
+    state = transitionPt3;
   }
 }
 
+function transitionPt3() {
+  console.log("Transition part 3");
+  kGuyAnimationTween.onComplete = () => {
+    console.log("slide completed");
+    bg2.visible = false;
+    state = pause;
+  };
+}
+
 function pause() {
-  console.log("Pause");
   return;
 }
 
