@@ -28,7 +28,7 @@ const app = new Application({
 //Add the canvas that Pixi automatically created for you to the HTML document
 document.body.appendChild(app.view);
 
-const TEST_MODE = true;
+const TEST_MODE = false;
 
 loader
   .add([
@@ -50,6 +50,7 @@ let state,
   naGuys,
   naHero,
   kGuys,
+  kAnimationGuys,
   kGuyAnimationTween,
   // naGuyAnimationTweens,
   transitionText,
@@ -406,11 +407,23 @@ function play(delta) {
   });
 }
 
+// ------------------------------
+// Transition Animation
+//
+// This whole thing is a mess...
+// ------------------------------
+
 function transition(delta) {
   timeCounter = 0;
   state = transitionPt1;
 }
 
+/**
+ * TRANSITION PT 1
+ *
+ * Freeze movement, flash background animation
+ * Change protein shape & reposition sodium guys
+ */
 function transitionPt1(delta) {
   console.log("Transition part 1");
   timeCounter += 1;
@@ -428,17 +441,18 @@ function transitionPt1(delta) {
   // hide target circles
   targetPoints.forEach((pt) => (pt.circle.visible = false));
 
+  // change background
   animatedBg.filters = [new PIXI.filters.GodrayFilter()];
-
   transitionText.visible = true;
   animatedBg.animationSpeed = 0.024;
   animatedBg.play();
 
-  if (timeCounter > 10) {
-    // if (timeCounter > 230) {
+  // if (timeCounter > 10) {
+  if (timeCounter > 230) {
     animatedBg.stop();
     transitionText.visible = false;
     bg2.visible = true;
+    animatedBg.gotoAndStop(0);
     animatedBg.filters = [];
 
     // remove boundary boxes
@@ -459,6 +473,12 @@ function transitionPt1(delta) {
   }
 }
 
+/**
+ * TRANSITION PT 2
+ *
+ * In which we animate out the Na guys,
+ * animate in the potassium guys
+ */
 function transitionPt2(delta) {
   console.log("Transition part 2");
 
@@ -516,20 +536,26 @@ function transitionPt2(delta) {
     kGuys.sort(function (a, b) {
       return Math.abs(a.x - 650) - Math.abs(b.x - 650);
     });
+
+    let kGuy1 = kGuys.pop();
+    let kGuy2 = kGuys.pop();
+
+    kAnimationGuys = [kGuy1, kGuy2];
+
     let kSprites = [
       {
-        s: kGuys[2],
-        target1: [620, 300],
-        target2: [750, 60],
-        target3: [700, 200],
-        duration: 250,
+        s: kAnimationGuys[0],
+        target1: [600, 50],
+        target2: [580, 50],
+        target3: [675, 224],
+        duration: 200,
       },
       {
-        s: kGuys[3],
-        target1: [650, 250],
-        target2: [550, 70],
-        target3: [600, 350],
-        duration: 200,
+        s: kAnimationGuys[1],
+        target1: [600, 250],
+        target2: [580, 70],
+        target3: [650, 303],
+        duration: 250,
       },
     ];
 
@@ -554,16 +580,83 @@ function transitionPt2(delta) {
     });
     kGuyAnimationTween = kGuyAnimationTweens.pop();
     state = transitionPt3;
+    // state = pause;
   }
 }
 
+/**
+ * TRANSITION PT 3
+ *
+ * In which we change the background
+ * once the last kGuy has arrived.
+ */
 function transitionPt3() {
   console.log("Transition part 3");
   kGuyAnimationTween.onComplete = () => {
     console.log("slide completed");
     bg2.visible = false;
-    state = pause;
+
+    // reposition
+    kAnimationGuys[0].x = 640;
+    kAnimationGuys[0].y = 236;
+    kAnimationGuys[1].x = 654;
+    kAnimationGuys[1].y = 311;
+
+    timeCounter = 0;
+    state = transitionPt4;
   };
+}
+
+/**
+ * TRANSITION PT 4
+ *
+ * In which we move the kGuys
+ * out of the protein
+ */
+function transitionPt4() {
+  console.log("Transition part 4");
+  timeCounter += 1;
+
+  if (timeCounter > 50) {
+    let kSprites = [
+      {
+        s: kAnimationGuys[0],
+        target1: [650, 500],
+        target2: [290, 500],
+        target3: [290, 463],
+        duration: 200,
+      },
+      {
+        s: kAnimationGuys[1],
+        target1: [650, 500],
+        target2: [380, 500],
+        target3: [390, 442],
+        duration: 250,
+      },
+    ];
+
+    let kGuyAnimationTweens = [];
+    kSprites.forEach((sprite) => {
+      // animate movement
+      let curve = [
+        [sprite.s.x, sprite.s.y],
+        sprite.target1,
+        sprite.target2,
+        sprite.target3,
+      ];
+      kGuyAnimationTweens.push(
+        c.followCurve(
+          sprite.s, //The sprite
+          curve, //The Bezier curve array
+          sprite.duration, //Duration, in milliseconds
+          "smoothstep", //Easing type
+          false //Should the tween yoyo?
+        )
+      );
+    });
+    kGuyAnimationTween = kGuyAnimationTweens.pop();
+    state = pause;
+  }
 }
 
 function pause() {
